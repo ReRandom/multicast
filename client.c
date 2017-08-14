@@ -86,7 +86,6 @@ void* reciver(void* arg)
 
 int main(int argc, char* argv[])
 {
-	char buf[256];
 	int sock = socket(AF_INET, SOCK_DGRAM, 0);
 	if(sock == -1)
 	{
