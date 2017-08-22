@@ -5,23 +5,23 @@
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <pthread.h>
 
-#define ADDR (224 << (3*8)) + 1
+#define ADDR (224 << (3*8)) + 7
+#define MESSAGE "Hello from server!"
+#define MESSAGE_LEN (strlen(MESSAGE)+1)*sizeof(char)
 
 void* sender(void* arg)
 {
-	char* msg = (char*) malloc(4*sizeof(char));
+	char* msg = (char*) malloc(MESSAGE_LEN);
 	if(msg == NULL)
 		fprintf(stderr, "Failed to allocate memory\n");
-	msg[3] = '\0';
-	msg[0] = 'h';
-	msg[1] = 'i';
-	msg[2] = '!';
+	msg = MESSAGE;
 	while(1)
 	{
-		if(sendto(*(((int**)arg)[0]), msg, sizeof(char)*4, 0, 
-				  ((struct sockaddr_in**)arg)[1], 
+		if(sendto(*(((int**)arg)[0]), msg, MESSAGE_LEN, 0,
+				  ((struct sockaddr_in**)arg)[1],
 				  sizeof(struct sockaddr_in)) == -1)
 			perror("send");
 		if(sleep(2) != 0)

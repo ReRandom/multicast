@@ -9,7 +9,7 @@
 #include <string.h>
 #include <fcntl.h>
 
-#define ADDR (224 << (3*8)) + 1
+#define ADDR (224 << (3*8)) + 7
 
 void* reciver(void* arg)
 {
