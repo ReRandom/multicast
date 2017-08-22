@@ -68,7 +68,7 @@ int main(int argc, char* argv[])
 			perror("close");
 		return 1;
 	}
-	free(arg);	
+	free(arg);
 	if(close(sock) == -1)
 	{
 		perror("close");
