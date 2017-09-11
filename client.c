@@ -8,11 +8,31 @@
 #include <pthread.h>
 #include <string.h>
 #include <fcntl.h>
+#include <signal.h>
 
 #define ADDR (224 << (3*8)) + 7
 
+static int thread_abort = 0;
+
+void hdl(int sig)
+{
+	thread_abort = 1;
+}
+
 void* reciver(void* arg)
 {
+	struct sigaction act;
+	memset(&act, 0, sizeof(act));
+	act.sa_handler = hdl;
+	sigset_t set;
+	sigemptyset(&set);
+	sigaddset(&set, SIGINT);
+	act.sa_mask = set;
+	if(sigaction(SIGINT, &act, 0) == -1)
+	{
+		perror("sigaction:");
+		return NULL;
+	}
 	char* full_message = NULL;
 	size_t size_message = 0;
 
@@ -31,8 +51,11 @@ void* reciver(void* arg)
 			tv.tv_sec = 1;
 			tv.tv_usec = 0;
 			sel_ret = select(*(((int**)arg)[0])+1, &set, NULL, NULL, &tv);
-			//<возможное прерывание>
+			if(thread_abort)
+				break;
 		}
+		if(thread_abort)
+			break;
 		if(sel_ret == -1)
 		{
 			fprintf(stderr, "error: select\n");

@@ -7,17 +7,38 @@
 #include <stdlib.h>
 #include <string.h>
 #include <pthread.h>
+#include <signal.h>
 
 #define ADDR (224 << (3*8)) + 7
 #define MESSAGE "Hello from server!"
 #define MESSAGE_LEN (strlen(MESSAGE)+1)*sizeof(char)
 
+static int thread_abort = 0;
+
+void hdl(int sig)
+{
+	thread_abort = 1;
+}
+
 void* sender(void* arg)
 {
+	struct sigaction act;
+	memset(&act, 0, sizeof(act));
+	act.sa_handler = hdl;
+	sigset_t set;
+	sigemptyset(&set);
+	sigaddset(&set, SIGINT);
+	act.sa_mask = set;
+	if(sigaction(SIGINT, &act, 0) == -1)
+	{
+		perror("sigaction:");
+		return NULL;
+	}
+
 	char* msg = (char*) malloc(MESSAGE_LEN);
 	if(msg == NULL)
 		fprintf(stderr, "Failed to allocate memory\n");
-	msg = MESSAGE;
+	strcpy(msg, MESSAGE);
 	while(1)
 	{
 		if(sendto(*(((int**)arg)[0]), msg, MESSAGE_LEN, 0,
@@ -26,7 +47,14 @@ void* sender(void* arg)
 			perror("send");
 		if(sleep(2) != 0)
 			fprintf(stderr, "sleep\n");
+		if(thread_abort)
+		{
+			free(msg);
+			printf("ok\n");
+			return NULL;
+		}
 	}
+	free(msg);
 	return NULL;
 }
 
